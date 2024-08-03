@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Navbar from './components/navbar'
 import { v4 as uuidv4 } from 'uuid';
 
@@ -6,6 +6,19 @@ function App() {
   const [todo, setTodo] = useState("")
   const [todos, setTodos] = useState([])
 
+  useEffect(() => {
+
+    let todoString = localStorage.getItem("todos")
+    if (todoString) {
+      let todos = JSON.parse(localStorage.getItem("todos"))
+      setTodos(todos)
+    }
+
+  }, [])
+
+  const saveToLS = () => {
+    localStorage.setItem("todos", JSON.stringify(todos))
+  }
 
   const handleEdit = (e, id) => {
     let t = todos.filter(i => {
@@ -16,17 +29,22 @@ function App() {
       return item.id != id;
     })
     setTodos(newTodos);
+    saveToLS()
   }
+
   const handleDelete = (e, id) => {
     let newTodos = todos.filter((item) => {
       return item.id != id;
     })
     setTodos(newTodos);
+    saveToLS()
   }
+
   const handleSave = () => {
     setTodos([...todos, { id: uuidv4(), todo, isCompleted: false }])
     setTodo("")
     console.log(todos)
+    saveToLS()
   }
 
   const handleChange = (e) => {
@@ -40,7 +58,7 @@ function App() {
           <h2 className=' text-lg font-bold'>Add Todo</h2>
           <div className="inputs flex gap-3 w-full">
             <input onChange={handleChange} value={todo} type="text" placeholder='Add a todo' className='min-w-full px-3' />
-            <button onClick={handleSave} className='bg-blue-500 text-white p-2 rounded px-4'>Save</button>
+            <button onClick={handleSave} disabled={todo.length<3} className='bg-blue-500 text-white disabled:bg-blue-300 p-2 rounded px-4'>Save</button>
           </div>
         </div>
 
@@ -50,7 +68,7 @@ function App() {
           {todos.map(item => {
             return <div key={item.id} className="todo flex gap-2 w-1/2 justify-between">
               <div className='flex gap-5 h-fit items-center'>
-                <input name={item.id} type="checkbox" onChange={(e) => {
+                <input name={item.id} type="checkbox" checked={item.isCompleted} onChange={(e) => {
                   let id = e.target.name;
                   let index = todos.findIndex((e) => {
                     return e.id === id;
@@ -59,11 +77,12 @@ function App() {
                   let newTodos = [...todos];
                   newTodos[index].isCompleted = !newTodos[index].isCompleted;
                   setTodos(newTodos)
+                  saveToLS( )
                 }} />
                 <div className={item.isCompleted ? "line-through" : ""}>{item.todo}
                 </div>
               </div>
-              <div className="buttons flex gap-2">
+              <div className="buttons flex gap-2 max-h-8">
                 <button className='bg-blue-500 text-white p-1 rounded px-3' onClick={(e) => handleEdit(e, item.id)}>Edit</button>
                 <button className='bg-red-500 text-white p-1 rounded px-3' onClick={(e) => { handleDelete(e, item.id) }}>Delete</button>
               </div>
